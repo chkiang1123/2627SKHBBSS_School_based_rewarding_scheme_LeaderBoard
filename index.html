@@ -14,8 +14,11 @@
             --red: #c0392b;
             --even-row: #faf8f5; --hover-row: #fdf3d7;
             --pill-bg: #fff; --pill-border: #e0dbd5; --pill-active-bg: #d4950c; --pill-active-text: #fff;
-            --indigo: #5b6abf; --indigo-hover: #4a58a8;
             --overlay-bg: rgba(45,42,38,0.4); --toast-bg: #fff; --toast-text: #2d2a26;
+            --fire: #e8590c; --fire-light: #fff4e6; --fire-border: #ffa94d; --fire-text: #d9480f;
+            --electric: #5b6abf; --electric-light: #edf2ff; --electric-border: #91a7ff; --electric-text: #364fc7;
+            --comment-bg: #fff; --comment-border: #f0ebe5;
+            --avatar-ring: rgba(212,149,12,0.15);
         }
         html.dark {
             --bg: #1a1714; --card-bg: #252220; --text: #e8e3dc; --text-muted: #a09a93;
@@ -25,6 +28,10 @@
             --even-row: #1e1b18; --hover-row: #3d2e0a;
             --pill-bg: #302c28; --pill-border: #4a4540;
             --overlay-bg: rgba(0,0,0,0.6); --toast-bg: #252220; --toast-text: #e8e3dc;
+            --fire-light: #2e1800; --fire-border: #7a3d00; --fire-text: #ffa94d;
+            --electric-light: #1a1e3d; --electric-border: #4a58a8; --electric-text: #91a7ff;
+            --comment-bg: #2a2724; --comment-border: #3d3832;
+            --avatar-ring: rgba(212,149,12,0.25);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -111,16 +118,105 @@
         th { background-color: var(--gold-light); color: var(--gold-text); font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
         th.balance-header { background-color: var(--green-bg); color: var(--green-text); }
         tr:nth-child(even) { background-color: var(--even-row); }
-        .rank { font-weight: 800; width: 50px; text-align: center; }
+        .rank { font-weight: 800; width: 44px; text-align: center; }
         .rank-1 { color: #d97706; font-size: 18px; }
         .rank-2 { color: #6b7280; font-size: 16px; }
         .rank-3 { color: #b45309; font-size: 16px; }
-        .stars-count { font-weight: 700; color: var(--gold); text-align: right; }
+        .stars-count { font-weight: 700; color: var(--gold); text-align: right; white-space: nowrap; }
 
+        .entry-name { font-weight: 700; }
+        .entry-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+        .badge {
+            display: inline-flex; align-items: center; gap: 3px;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 11px; font-weight: 700; line-height: 1.4;
+        }
+        .badge-streak { background: var(--fire-light); color: var(--fire-text); border: 1px solid var(--fire-border); }
+        .badge-best { background: var(--electric-light); color: var(--electric-text); border: 1px solid var(--electric-border); }
+        .badge-days { background: var(--gold-light); color: var(--gold-text); border: 1px solid var(--gold-pale); }
+
+        .entry-latest-comment {
+            margin-top: 5px; font-size: 12px; color: var(--text-muted);
+            font-style: italic; line-height: 1.4;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .entry-latest-comment .elc-teacher { font-style: normal; font-weight: 700; color: var(--text); }
+        .entry-latest-comment .elc-date { font-style: normal; font-weight: 600; opacity: 0.7; }
+
+        /* Highlights bar */
+        .highlights-bar {
+            display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;
+        }
+        .highlight-chip {
+            display: flex; align-items: center; gap: 6px;
+            background: var(--card-bg); border: 1.5px solid var(--border);
+            padding: 8px 14px; border-radius: 12px; font-size: 12px;
+            font-weight: 700; color: var(--text); flex: 1; min-width: 140px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .highlight-chip .hl-icon { font-size: 18px; }
+        .highlight-chip .hl-label { color: var(--text-muted); font-size: 11px; font-weight: 600; }
+        .highlight-chip .hl-value { font-size: 13px; }
+
+        /* Recent comments feed (inside student tab) */
+        .recent-section { margin-top: 24px; }
+        .recent-section-title {
+            font-size: 15px; font-weight: 800; color: var(--text);
+            margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+        }
+        .comment-feed { display: flex; flex-direction: column; gap: 10px; }
+        .comment-card {
+            background: var(--comment-bg); border: 1.5px solid var(--comment-border);
+            border-radius: 14px; padding: 14px 16px;
+            transition: box-shadow 0.2s;
+            animation: cardIn 0.3s ease backwards;
+        }
+        .comment-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+        @keyframes cardIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .cc-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .cc-avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 13px; color: #fff;
+            flex-shrink: 0; box-shadow: 0 0 0 3px var(--avatar-ring);
+        }
+        .cc-meta { flex: 1; min-width: 0; }
+        .cc-teacher { font-weight: 800; font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cc-date { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+        .cc-stars-badge {
+            background: var(--gold-light); color: var(--gold-text);
+            padding: 4px 10px; border-radius: 10px;
+            font-weight: 800; font-size: 13px; white-space: nowrap;
+            border: 1px solid var(--gold-pale);
+        }
+        .cc-target {
+            font-size: 13px; font-weight: 700; color: var(--text);
+            margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+        }
+        .cc-target-arrow { color: var(--gold); font-weight: 800; }
+        .cc-comment {
+            font-size: 13px; color: var(--text-muted); font-weight: 600;
+            font-style: italic; line-height: 1.5;
+            padding: 8px 12px; background: var(--input-bg);
+            border-radius: 8px; border-left: 3px solid var(--gold);
+        }
+
+        .show-more-btn {
+            display: block; width: 100%; padding: 12px;
+            background: var(--gold-light); color: var(--gold-text);
+            border: 1.5px solid var(--gold-pale); border-radius: 10px;
+            font-weight: 700; font-size: 14px; cursor: pointer;
+            font-family: inherit; text-align: center; transition: all 0.2s;
+            margin-top: 8px;
+        }
+        .show-more-btn:hover { background: var(--gold-pale); }
+
+        .empty-state { text-align: center; color: var(--text-muted); padding: 30px 20px; font-weight: 600; }
         .loading { text-align: center; color: var(--text-muted); font-style: italic; padding: 20px; font-weight: 600; }
         .error { color: var(--red); text-align: center; padding: 20px; display: none; font-weight: 700; }
 
-        /* Toast (replaces alert) */
+        /* Toast */
         .toast-overlay {
             position: fixed; inset: 0; background: var(--overlay-bg);
             display: flex; align-items: center; justify-content: center;
@@ -138,23 +234,31 @@
         }
         @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
         @keyframes scaleIn { from { transform: scale(.92); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+
+        @media (max-width: 420px) {
+            .container { padding: 20px 14px; }
+            .tab-btn { font-size: 12px; padding: 10px 4px; }
+            th, td { padding: 10px 6px; font-size: 13px; }
+            .highlight-chip { min-width: 100%; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header-container">
-        <h2 id="pageTitle">🏆 Star Reward Leaderboard</h2>
+        <h2 id="pageTitle">&#x1F3C6; Star Reward Leaderboard</h2>
         <button id="refreshBtn" class="btn-refresh" onclick="refreshData()">
-            <span id="refreshIcon">🔄</span> Refresh
+            <span id="refreshIcon">&#x1F504;</span> Refresh
         </button>
     </div>
 
     <div class="tab-group">
         <button id="btnClassTab" class="tab-btn active" onclick="switchTab('class')">By Class</button>
         <button id="btnStudentTab" class="tab-btn" onclick="switchTab('student')">By Student</button>
-        <button id="btnBalanceTab" class="tab-btn" onclick="switchTab('balance')">🔍 Balance</button>
+        <button id="btnBalanceTab" class="tab-btn" onclick="switchTab('balance')">&#x1F50D; Balance</button>
     </div>
 
+    <!-- Student Filters -->
     <div id="studentFilters" class="filter-section" style="display:none;">
         <div class="filter-row">
             <span class="filter-label">Form:</span>
@@ -179,8 +283,9 @@
         <div class="search-row"><input type="text" id="searchInput" placeholder="Search student name..." oninput="applyFilters()"></div>
     </div>
 
+    <!-- Balance Filters -->
     <div id="balanceFilters" class="balance-card" style="display:none;">
-        <p>💡 Net available stars = Stars Earned (Records) − Stars Redeemed (Redemptions).</p>
+        <p>&#x1F4A1; Net available stars = Stars Earned (Records) &#x2212; Stars Redeemed (Redemptions).</p>
         <div class="sub-tab-group">
             <button id="btnBalanceClass" class="sub-tab-btn active" onclick="switchBalanceSub('Class')">By Class</button>
             <button id="btnBalanceStudent" class="sub-tab-btn" onclick="switchBalanceSub('Student')">By Student</button>
@@ -189,14 +294,26 @@
     </div>
 
     <div id="loading" class="loading">Loading records...</div>
-    <div id="error" class="error">Failed to load data. Please ensure the Google Sheet is shared as "Anyone with the link can view".</div>
+    <div id="error" class="error">Failed to load data. Please ensure the Google Sheet is shared as &quot;Anyone with the link can view&quot;.</div>
 
+    <!-- Class Board -->
     <div id="classBoard">
-        <table><thead><tr><th class="rank">#</th><th>Class</th><th style="text-align:right">Total Stars Earned</th></tr></thead><tbody id="classTableBody"></tbody></table>
+        <div id="classHighlights" class="highlights-bar"></div>
+        <table><thead><tr><th class="rank">#</th><th>Class</th><th style="text-align:right">Stars Earned</th></tr></thead><tbody id="classTableBody"></tbody></table>
     </div>
+
+    <!-- Student Board -->
     <div id="studentBoard" style="display:none;">
-        <table><thead><tr><th class="rank">#</th><th>Student</th><th style="text-align:right">Total Stars Earned</th></tr></thead><tbody id="studentTableBody"></tbody></table>
+        <div id="studentHighlights" class="highlights-bar"></div>
+        <table><thead><tr><th class="rank">#</th><th>Student</th><th style="text-align:right">Stars Earned</th></tr></thead><tbody id="studentTableBody"></tbody></table>
+        <!-- Recent Comments Feed -->
+        <div id="recentCommentsSection" class="recent-section">
+            <div class="recent-section-title">&#x1F4AC; Recent Teacher Comments</div>
+            <div id="commentFeed" class="comment-feed"></div>
+        </div>
     </div>
+
+    <!-- Balance Board -->
     <div id="balanceBoard" style="display:none;">
         <table><thead><tr><th class="balance-header">Name</th><th class="balance-header" style="text-align:right">Earned</th><th class="balance-header" style="text-align:right">Redeemed</th><th class="balance-header" style="text-align:right">Net Balance</th></tr></thead><tbody id="balanceTableBody"></tbody></table>
     </div>
@@ -218,16 +335,23 @@ var VALID_CLASSES = [
     "3A","3B","3C","3D","4A","4B","4C","4D",
     "5A","5B","5C","5D","6A","6B","6C","6D"
 ];
+var AVATAR_COLORS = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#34495e','#c0392b','#16a085'];
+var COMMENT_PAGE_SIZE = 20;
 
+/* ── State ── */
 var classTotals = [];
 var studentTotals = [];
 var balanceList = [];
+var allRecords = [];
+var streakMap = {};
+var latestCommentMap = {};
 var activeTab = 'class';
 var activeBalanceSub = 'Class';
 var selectedForm = null;
 var selectedClassFilter = null;
+var commentsShown = COMMENT_PAGE_SIZE;
+var lastFilteredStudentNames = [];
 
-/* Raw maps from each sheet */
 var recordsClassMap = {};
 var recordsStudentMap = {};
 var redemptionsClassMap = {};
@@ -235,12 +359,81 @@ var redemptionsStudentMap = {};
 var recordsReady = false;
 var redemptionsReady = false;
 
-/* ── Toast (replaces alert) ── */
+/* ── Toast ── */
 function showToast(message) {
     var overlay = document.createElement('div');
     overlay.className = 'toast-overlay';
-    overlay.innerHTML = '<div class="toast-box"><p>' + message + '</p><button onclick="this.closest(\'.toast-overlay\').remove()">OK</button></div>';
+    var box = document.createElement('div');
+    box.className = 'toast-box';
+    var p = document.createElement('p');
+    p.textContent = message;
+    var btn = document.createElement('button');
+    btn.textContent = 'OK';
+    btn.onclick = function() { overlay.remove(); };
+    box.appendChild(p);
+    box.appendChild(btn);
+    overlay.appendChild(box);
     document.body.appendChild(overlay);
+}
+
+/* ── Helpers ── */
+function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function rankBadge(i) { return i === 0 ? '\u{1F947}' : i === 1 ? '\u{1F948}' : i === 2 ? '\u{1F949}' : String(i + 1); }
+function rankClass(i) { return i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : ''; }
+
+function hashStr(s) {
+    var h = 0;
+    for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+    return Math.abs(h);
+}
+function getAvatarColor(name) { return AVATAR_COLORS[hashStr(name) % AVATAR_COLORS.length]; }
+function getInitials(name) {
+    if (!name) return '?';
+    var parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+}
+
+function parseCellDate(cell) {
+    if (!cell || cell.v === null || cell.v === undefined) return null;
+    var v = cell.v;
+    if (typeof v === 'string') {
+        var m = v.match(/Date\((\d+),\s*(\d+),\s*(\d+)/);
+        if (m) return new Date(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]));
+    }
+    if (cell.f) { var d = new Date(cell.f); if (!isNaN(d.getTime())) return d; }
+    var d2 = new Date(v);
+    if (!isNaN(d2.getTime())) return d2;
+    return null;
+}
+
+function getCellText(cell) {
+    if (!cell || cell.v === null || cell.v === undefined) return '';
+    if (cell.f) return String(cell.f).trim();
+    return String(cell.v).trim();
+}
+
+function dateKey(d) {
+    if (!d) return '';
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+
+function formatDateNice(d) {
+    if (!d) return '';
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+}
+
+function formatDateShort(d) {
+    if (!d) return '';
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return d.getDate() + ' ' + months[d.getMonth()];
+}
+
+function daysDiff(dk1, dk2) {
+    var d1 = new Date(dk1 + 'T00:00:00');
+    var d2 = new Date(dk2 + 'T00:00:00');
+    return Math.round((d2 - d1) / 86400000);
 }
 
 /* ── Loading state ── */
@@ -263,7 +456,6 @@ function loadAllData() {
     redemptionsReady = false;
     loadSheet('Records', 'handleRecordsData');
     loadSheet('Redemptions', 'handleRedemptionsData');
-    /* Safety timeout for missing Redemptions sheet */
     setTimeout(function() {
         if (!redemptionsReady) {
             redemptionsClassMap = {};
@@ -311,11 +503,42 @@ function processSheetRows(rows, classMap, studentMap) {
     });
 }
 
+/* Column F = index 5 for reasons/comments */
+function processRecordsDetailed(rows) {
+    var records = [];
+    rows.forEach(function(row) {
+        if (!row.c) return;
+        var targetCell = row.c[3];
+        var starsCell = row.c[4];
+        var target = targetCell && targetCell.v !== null ? targetCell.v.toString().trim() : '';
+        var stars = starsCell && starsCell.v !== null ? (parseInt(starsCell.v) || 0) : 0;
+        if (!target) return;
+
+        var date = row.c[0] ? parseCellDate(row.c[0]) : null;
+        var teacher = row.c[1] ? getCellText(row.c[1]) : '';
+        var comment = (row.c.length > 5 && row.c[5]) ? getCellText(row.c[5]) : '';
+        var isClass = VALID_CLASSES.indexOf(target.toUpperCase()) !== -1;
+
+        records.push({
+            date: date,
+            dateStr: date ? dateKey(date) : '',
+            teacher: teacher,
+            comment: comment,
+            target: isClass ? target.toUpperCase() : target,
+            stars: stars,
+            isClass: isClass
+        });
+    });
+    return records;
+}
+
 window.handleRecordsData = function(json) {
     recordsClassMap = {}; recordsStudentMap = {};
+    allRecords = [];
     try {
         if (json && json.table && json.table.rows) {
             processSheetRows(json.table.rows, recordsClassMap, recordsStudentMap);
+            allRecords = processRecordsDetailed(json.table.rows);
         }
     } catch (e) { /* empty */ }
     recordsReady = true;
@@ -336,7 +559,6 @@ window.handleRedemptionsData = function(json) {
 function checkDataReady() {
     if (!recordsReady || !redemptionsReady) return;
 
-    /* Cumulative (from Records only) */
     classTotals = Object.keys(recordsClassMap).map(function(k) {
         return { name: k, stars: recordsClassMap[k] };
     }).sort(function(a, b) { return b.stars - a.stars; });
@@ -345,7 +567,6 @@ function checkDataReady() {
         return { name: k, stars: recordsStudentMap[k] };
     }).sort(function(a, b) { return b.stars - a.stars; });
 
-    /* Balance = earned - redeemed */
     balanceList = [];
     var allClasses = {};
     Object.keys(recordsClassMap).forEach(function(k) { allClasses[k] = true; });
@@ -365,31 +586,274 @@ function checkDataReady() {
         balanceList.push({ name: stu, earned: earned, redeemed: redeemed, net: earned - redeemed, type: 'Student' });
     });
 
+    calculateStreaks();
+    buildLatestComments();
     setLoadingState(false);
     renderCurrentTab();
 }
 
+/* ── Streak Calculation ── */
+function calculateStreaks() {
+    streakMap = {};
+    var targetDates = {};
+
+    allRecords.forEach(function(rec) {
+        if (!rec.dateStr) return;
+        var key = rec.target;
+        if (!targetDates[key]) targetDates[key] = {};
+        targetDates[key][rec.dateStr] = (targetDates[key][rec.dateStr] || 0) + rec.stars;
+    });
+
+    var today = dateKey(new Date());
+
+    Object.keys(targetDates).forEach(function(target) {
+        var dayMap = targetDates[target];
+        var dates = Object.keys(dayMap).sort();
+        if (dates.length === 0) return;
+
+        var bestDayStars = 0;
+        var bestDayDate = '';
+        dates.forEach(function(d) {
+            if (dayMap[d] > bestDayStars) {
+                bestDayStars = dayMap[d];
+                bestDayDate = d;
+            }
+        });
+
+        var maxStreak = 1;
+        var tempStreak = 1;
+        for (var i = 1; i < dates.length; i++) {
+            if (daysDiff(dates[i - 1], dates[i]) === 1) {
+                tempStreak++;
+                if (tempStreak > maxStreak) maxStreak = tempStreak;
+            } else {
+                tempStreak = 1;
+            }
+        }
+
+        var lastDate = dates[dates.length - 1];
+        var daysFromLast = daysDiff(lastDate, today);
+        var currentStreak = 0;
+        if (daysFromLast <= 1) {
+            currentStreak = 1;
+            for (var j = dates.length - 2; j >= 0; j--) {
+                if (daysDiff(dates[j], dates[j + 1]) === 1) {
+                    currentStreak++;
+                } else { break; }
+            }
+        }
+
+        streakMap[target] = {
+            currentStreak: currentStreak,
+            maxStreak: maxStreak,
+            bestDayStars: bestDayStars,
+            bestDayDate: bestDayDate,
+            totalDays: dates.length
+        };
+    });
+}
+
+/* ── Latest comment per student ── */
+function buildLatestComments() {
+    latestCommentMap = {};
+    var sorted = allRecords.slice().filter(function(r) { return !r.isClass; }).sort(function(a, b) {
+        if (a.dateStr && b.dateStr) return b.dateStr.localeCompare(a.dateStr);
+        if (a.dateStr) return -1;
+        if (b.dateStr) return 1;
+        return 0;
+    });
+    sorted.forEach(function(rec) {
+        if (!latestCommentMap[rec.target]) {
+            latestCommentMap[rec.target] = rec;
+        }
+    });
+}
+
 /* ── Rendering ── */
 function renderCurrentTab() {
-    if (activeTab === 'class') renderClassTable();
-    else if (activeTab === 'student') applyFilters();
-    else filterBalanceData();
+    if (activeTab === 'class') { renderClassHighlights(); renderClassTable(); }
+    else if (activeTab === 'student') { renderStudentHighlights(); applyFilters(); }
+    else { filterBalanceData(); }
 }
+
+function buildBadges(name) {
+    var info = streakMap[name];
+    if (!info) return '';
+    var parts = [];
+    if (info.currentStreak > 1) {
+        parts.push('<span class="badge badge-streak">\u{1F525} ' + info.currentStreak + '-day streak</span>');
+    }
+    if (info.maxStreak > 1 && info.maxStreak > info.currentStreak) {
+        parts.push('<span class="badge badge-streak">\u{1F3C6} Best: ' + info.maxStreak + ' days</span>');
+    }
+    if (info.bestDayStars > 1) {
+        parts.push('<span class="badge badge-best">\u{26A1} ' + info.bestDayStars + ' in one day</span>');
+    }
+    if (info.totalDays > 1) {
+        parts.push('<span class="badge badge-days">\u{1F4C5} ' + info.totalDays + ' active days</span>');
+    }
+    return parts.length > 0 ? '<div class="entry-badges">' + parts.join('') + '</div>' : '';
+}
+
+function buildLatestCommentLine(name) {
+    var rec = latestCommentMap[name];
+    if (!rec) return '';
+    var parts = [];
+    if (rec.comment) parts.push('&ldquo;' + esc(rec.comment) + '&rdquo;');
+    var meta = [];
+    if (rec.teacher) meta.push('<span class="elc-teacher">' + esc(rec.teacher) + '</span>');
+    if (rec.date) meta.push('<span class="elc-date">' + formatDateShort(rec.date) + '</span>');
+    if (meta.length > 0) parts.push(meta.join(' &middot; '));
+    if (parts.length === 0) return '';
+    return '<div class="entry-latest-comment">\u{1F4AC} ' + parts.join(' \u{2014} ') + '</div>';
+}
+
+function findTopStreak(items) {
+    var best = null;
+    items.forEach(function(item) {
+        var s = streakMap[item.name];
+        if (s && s.currentStreak > 0) {
+            if (!best || s.currentStreak > best.streak) {
+                best = { name: item.name, streak: s.currentStreak };
+            }
+        }
+    });
+    return best;
+}
+
+function findBestDay(items) {
+    var best = null;
+    items.forEach(function(item) {
+        var s = streakMap[item.name];
+        if (s && s.bestDayStars > 0) {
+            if (!best || s.bestDayStars > best.stars) {
+                best = { name: item.name, stars: s.bestDayStars, date: s.bestDayDate };
+            }
+        }
+    });
+    return best;
+}
+
+function renderHighlights(containerId, items) {
+    var el = document.getElementById(containerId);
+    var html = '';
+    var topStreak = findTopStreak(items);
+    var bestDay = findBestDay(items);
+
+    if (topStreak && topStreak.streak > 1) {
+        html += '<div class="highlight-chip">' +
+            '<span class="hl-icon">\u{1F525}</span>' +
+            '<div><div class="hl-label">Top Active Streak</div>' +
+            '<div class="hl-value">' + esc(topStreak.name) + ' &mdash; ' + topStreak.streak + ' days</div></div></div>';
+    }
+    if (bestDay && bestDay.stars > 1) {
+        var niceDate = bestDay.date ? formatDateNice(new Date(bestDay.date + 'T00:00:00')) : '';
+        html += '<div class="highlight-chip">' +
+            '<span class="hl-icon">\u{26A1}</span>' +
+            '<div><div class="hl-label">Best Single Day</div>' +
+            '<div class="hl-value">' + esc(bestDay.name) + ' &mdash; ' + bestDay.stars + ' stars' + (niceDate ? ' (' + niceDate + ')' : '') + '</div></div></div>';
+    }
+    el.innerHTML = html;
+}
+
+function renderClassHighlights() { renderHighlights('classHighlights', classTotals); }
+function renderStudentHighlights() { renderHighlights('studentHighlights', studentTotals); }
 
 function renderClassTable() {
     var tb = document.getElementById('classTableBody');
     tb.innerHTML = classTotals.map(function(item, i) {
-        return '<tr><td class="rank ' + rankClass(i) + '">' + rankBadge(i) + '</td><td><strong>' + esc(item.name) + '</strong></td><td class="stars-count">⭐ ' + item.stars + '</td></tr>';
-    }).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">No class records yet.</td></tr>';
+        return '<tr><td class="rank ' + rankClass(i) + '">' + rankBadge(i) + '</td>' +
+            '<td><div class="entry-name">' + esc(item.name) + '</div>' + buildBadges(item.name) + '</td>' +
+            '<td class="stars-count">\u{2B50} ' + item.stars + '</td></tr>';
+    }).join('') || '<tr><td colspan="3" class="empty-state">No class records yet.</td></tr>';
 }
 
 function renderStudentTable(data) {
     var tb = document.getElementById('studentTableBody');
     tb.innerHTML = data.map(function(item, i) {
-        return '<tr><td class="rank ' + rankClass(i) + '">' + rankBadge(i) + '</td><td><strong>' + esc(item.name) + '</strong></td><td class="stars-count">⭐ ' + item.stars + '</td></tr>';
-    }).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">No student matches.</td></tr>';
+        return '<tr><td class="rank ' + rankClass(i) + '">' + rankBadge(i) + '</td>' +
+            '<td><div class="entry-name">' + esc(item.name) + '</div>' +
+            buildBadges(item.name) +
+            buildLatestCommentLine(item.name) +
+            '</td>' +
+            '<td class="stars-count">\u{2B50} ' + item.stars + '</td></tr>';
+    }).join('') || '<tr><td colspan="3" class="empty-state">No student matches.</td></tr>';
 }
 
+/* ── Recent Comments Feed (below student table) ── */
+function renderCommentFeed(studentNames) {
+    var section = document.getElementById('recentCommentsSection');
+    var feed = document.getElementById('commentFeed');
+    commentsShown = COMMENT_PAGE_SIZE;
+
+    var nameSet = {};
+    studentNames.forEach(function(n) { nameSet[n] = true; });
+
+    var filtered = allRecords.filter(function(rec) {
+        return !rec.isClass && nameSet[rec.target] && (rec.comment || rec.teacher);
+    }).sort(function(a, b) {
+        if (a.dateStr && b.dateStr) return b.dateStr.localeCompare(a.dateStr);
+        if (a.dateStr) return -1;
+        if (b.dateStr) return 1;
+        return 0;
+    });
+
+    if (filtered.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    section.style.display = 'block';
+    lastFilteredStudentNames = studentNames;
+    renderCommentCards(feed, filtered);
+}
+
+function renderCommentCards(feed, filtered) {
+    var toShow = filtered.slice(0, commentsShown);
+    var html = toShow.map(function(rec, idx) {
+        var color = rec.teacher ? getAvatarColor(rec.teacher) : '#888';
+        var initials = rec.teacher ? getInitials(rec.teacher) : '?';
+        var dateStr = rec.date ? formatDateNice(rec.date) : '';
+        var starsText = rec.stars === 1 ? '1 star' : rec.stars + ' stars';
+        var delayMs = Math.min(idx * 25, 250);
+
+        return '<div class="comment-card" style="animation-delay:' + delayMs + 'ms">' +
+            '<div class="cc-header">' +
+                '<div class="cc-avatar" style="background:' + color + '">' + esc(initials) + '</div>' +
+                '<div class="cc-meta">' +
+                    '<div class="cc-teacher">' + (rec.teacher ? esc(rec.teacher) : 'Teacher') + '</div>' +
+                    (dateStr ? '<div class="cc-date">' + dateStr + '</div>' : '') +
+                '</div>' +
+                '<div class="cc-stars-badge">\u{2B50} ' + starsText + '</div>' +
+            '</div>' +
+            '<div class="cc-target">' +
+                '<span class="cc-target-arrow">\u{2192}</span> ' + esc(rec.target) +
+            '</div>' +
+            (rec.comment ? '<div class="cc-comment">&ldquo;' + esc(rec.comment) + '&rdquo;</div>' : '') +
+        '</div>';
+    }).join('');
+
+    if (filtered.length > commentsShown) {
+        html += '<button class="show-more-btn" onclick="showMoreComments()">Show more (' + (filtered.length - commentsShown) + ' remaining)</button>';
+    }
+    feed.innerHTML = html;
+}
+
+function showMoreComments() {
+    commentsShown += COMMENT_PAGE_SIZE;
+    var nameSet = {};
+    lastFilteredStudentNames.forEach(function(n) { nameSet[n] = true; });
+    var filtered = allRecords.filter(function(rec) {
+        return !rec.isClass && nameSet[rec.target] && (rec.comment || rec.teacher);
+    }).sort(function(a, b) {
+        if (a.dateStr && b.dateStr) return b.dateStr.localeCompare(a.dateStr);
+        if (a.dateStr) return -1;
+        if (b.dateStr) return 1;
+        return 0;
+    });
+    renderCommentCards(document.getElementById('commentFeed'), filtered);
+}
+
+/* ── Balance ── */
 function filterBalanceData() {
     var q = (document.getElementById('balanceSearchInput').value || '').toLowerCase().trim();
     var filtered = balanceList.filter(function(item) { return item.type === activeBalanceSub; });
@@ -398,11 +862,11 @@ function filterBalanceData() {
 
     var tb = document.getElementById('balanceTableBody');
     tb.innerHTML = filtered.map(function(item) {
-        return '<tr><td><strong>' + esc(item.name) + '</strong></td><td class="stars-count">' + item.earned + '</td><td class="stars-count" style="color:var(--red)">' + item.redeemed + '</td><td class="stars-count">⭐ ' + item.net + '</td></tr>';
-    }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">No entries found.</td></tr>';
+        return '<tr><td><strong>' + esc(item.name) + '</strong></td><td class="stars-count">' + item.earned + '</td><td class="stars-count" style="color:var(--red)">' + item.redeemed + '</td><td class="stars-count">\u{2B50} ' + item.net + '</td></tr>';
+    }).join('') || '<tr><td colspan="4" class="empty-state">No entries found.</td></tr>';
 }
 
-/* ── Filters ── */
+/* ── Student Filters ── */
 function toggleForm(v) {
     selectedForm = selectedForm === v ? null : v;
     if (!selectedForm) selectedClassFilter = null;
@@ -438,6 +902,7 @@ function applyFilters() {
         filtered.sort(function(a, b) { return b.stars - a.stars; });
     }
     renderStudentTable(filtered);
+    renderCommentFeed(filtered.map(function(item) { return item.name; }));
 }
 
 function extractClass(name) { var m = name.match(/^[1-6][A-D]/i); return m ? m[0].toUpperCase() : 'ZZ'; }
@@ -455,8 +920,8 @@ function switchTab(type) {
     document.getElementById('balanceFilters').style.display = type === 'balance' ? 'block' : 'none';
 
     var title = document.getElementById('pageTitle');
-    if (type === 'balance') { title.textContent = '🔍 Available Star Balance'; }
-    else { title.textContent = '🏆 Star Reward Leaderboard'; }
+    if (type === 'balance') { title.textContent = '\u{1F50D} Available Star Balance'; }
+    else { title.textContent = '\u{1F3C6} Star Reward Leaderboard'; }
     renderCurrentTab();
 }
 
@@ -468,11 +933,6 @@ function switchBalanceSub(sub) {
 }
 
 function refreshData() { loadAllData(); }
-
-/* ── Helpers ── */
-function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-function rankBadge(i) { return i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : String(i + 1); }
-function rankClass(i) { return i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : ''; }
 
 /* ── Initial load ── */
 loadAllData();
