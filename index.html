@@ -158,7 +158,7 @@
         .highlight-chip .hl-label { color: var(--text-muted); font-size: 11px; font-weight: 600; }
         .highlight-chip .hl-value { font-size: 13px; }
 
-        /* Recent comments feed (inside student tab) */
+        /* Recent comments feed */
         .recent-section { margin-top: 24px; }
         .recent-section-title {
             font-size: 15px; font-weight: 800; color: var(--text);
@@ -300,6 +300,11 @@
     <div id="classBoard">
         <div id="classHighlights" class="highlights-bar"></div>
         <table><thead><tr><th class="rank">#</th><th>Class</th><th style="text-align:right">Stars Earned</th></tr></thead><tbody id="classTableBody"></tbody></table>
+        <!-- Recent Comments Feed for Classes -->
+        <div id="classCommentsSection" class="recent-section">
+            <div class="recent-section-title">&#x1F4AC; Recent Teacher Comments</div>
+            <div id="classCommentFeed" class="comment-feed"></div>
+        </div>
     </div>
 
     <!-- Student Board -->
@@ -345,12 +350,15 @@ var balanceList = [];
 var allRecords = [];
 var streakMap = {};
 var latestCommentMap = {};
+var latestClassCommentMap = {};
 var activeTab = 'class';
 var activeBalanceSub = 'Class';
 var selectedForm = null;
 var selectedClassFilter = null;
 var commentsShown = COMMENT_PAGE_SIZE;
+var classCommentsShown = COMMENT_PAGE_SIZE;
 var lastFilteredStudentNames = [];
+var lastFilteredClassNames = [];
 
 var recordsClassMap = {};
 var recordsStudentMap = {};
@@ -434,6 +442,13 @@ function daysDiff(dk1, dk2) {
     var d1 = new Date(dk1 + 'T00:00:00');
     var d2 = new Date(dk2 + 'T00:00:00');
     return Math.round((d2 - d1) / 86400000);
+}
+
+function sortByDateDesc(a, b) {
+    if (a.dateStr && b.dateStr) return b.dateStr.localeCompare(a.dateStr);
+    if (a.dateStr) return -1;
+    if (b.dateStr) return 1;
+    return 0;
 }
 
 /* ── Loading state ── */
@@ -653,25 +668,29 @@ function calculateStreaks() {
     });
 }
 
-/* ── Latest comment per student ── */
+/* ── Latest comment per student AND per class ── */
 function buildLatestComments() {
     latestCommentMap = {};
-    var sorted = allRecords.slice().filter(function(r) { return !r.isClass; }).sort(function(a, b) {
-        if (a.dateStr && b.dateStr) return b.dateStr.localeCompare(a.dateStr);
-        if (a.dateStr) return -1;
-        if (b.dateStr) return 1;
-        return 0;
-    });
+    latestClassCommentMap = {};
+
+    var sorted = allRecords.slice().sort(sortByDateDesc);
+
     sorted.forEach(function(rec) {
-        if (!latestCommentMap[rec.target]) {
-            latestCommentMap[rec.target] = rec;
+        if (rec.isClass) {
+            if (!latestClassCommentMap[rec.target]) {
+                latestClassCommentMap[rec.target] = rec;
+            }
+        } else {
+            if (!latestCommentMap[rec.target]) {
+                latestCommentMap[rec.target] = rec;
+            }
         }
     });
 }
 
 /* ── Rendering ── */
 function renderCurrentTab() {
-    if (activeTab === 'class') { renderClassHighlights(); renderClassTable(); }
+    if (activeTab === 'class') { renderClassHighlights(); renderClassTable(); renderClassCommentFeed(); }
     else if (activeTab === 'student') { renderStudentHighlights(); applyFilters(); }
     else { filterBalanceData(); }
 }
@@ -695,8 +714,8 @@ function buildBadges(name) {
     return parts.length > 0 ? '<div class="entry-badges">' + parts.join('') + '</div>' : '';
 }
 
-function buildLatestCommentLine(name) {
-    var rec = latestCommentMap[name];
+function buildLatestCommentLine(name, isClass) {
+    var rec = isClass ? latestClassCommentMap[name] : latestCommentMap[name];
     if (!rec) return '';
     var parts = [];
     if (rec.comment) parts.push('&ldquo;' + esc(rec.comment) + '&rdquo;');
@@ -763,7 +782,10 @@ function renderClassTable() {
     var tb = document.getElementById('classTableBody');
     tb.innerHTML = classTotals.map(function(item, i) {
         return '<tr><td class="rank ' + rankClass(i) + '">' + rankBadge(i) + '</td>' +
-            '<td><div class="entry-name">' + esc(item.name) + '</div>' + buildBadges(item.name) + '</td>' +
+            '<td><div class="entry-name">' + esc(item.name) + '</div>' +
+            buildBadges(item.name) +
+            buildLatestCommentLine(item.name, true) +
+            '</td>' +
             '<td class="stars-count">\u{2B50} ' + item.stars + '</td></tr>';
     }).join('') || '<tr><td colspan="3" class="empty-state">No class records yet.</td></tr>';
 }
@@ -774,13 +796,77 @@ function renderStudentTable(data) {
         return '<tr><td class="rank ' + rankClass(i) + '">' + rankBadge(i) + '</td>' +
             '<td><div class="entry-name">' + esc(item.name) + '</div>' +
             buildBadges(item.name) +
-            buildLatestCommentLine(item.name) +
+            buildLatestCommentLine(item.name, false) +
             '</td>' +
             '<td class="stars-count">\u{2B50} ' + item.stars + '</td></tr>';
     }).join('') || '<tr><td colspan="3" class="empty-state">No student matches.</td></tr>';
 }
 
-/* ── Recent Comments Feed (below student table) ── */
+/* ── Recent Comments Feed for Classes (below class table) ── */
+function renderClassCommentFeed() {
+    var section = document.getElementById('classCommentsSection');
+    var feed = document.getElementById('classCommentFeed');
+    classCommentsShown = COMMENT_PAGE_SIZE;
+
+    var classNames = classTotals.map(function(item) { return item.name; });
+    var nameSet = {};
+    classNames.forEach(function(n) { nameSet[n] = true; });
+
+    var filtered = allRecords.filter(function(rec) {
+        return rec.isClass && nameSet[rec.target] && (rec.comment || rec.teacher);
+    }).sort(sortByDateDesc);
+
+    if (filtered.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    section.style.display = 'block';
+    lastFilteredClassNames = classNames;
+    renderClassCommentCards(feed, filtered);
+}
+
+function renderClassCommentCards(feed, filtered) {
+    var toShow = filtered.slice(0, classCommentsShown);
+    var html = toShow.map(function(rec, idx) {
+        var color = rec.teacher ? getAvatarColor(rec.teacher) : '#888';
+        var initials = rec.teacher ? getInitials(rec.teacher) : '?';
+        var dateStr = rec.date ? formatDateNice(rec.date) : '';
+        var starsText = rec.stars === 1 ? '1 star' : rec.stars + ' stars';
+        var delayMs = Math.min(idx * 25, 250);
+
+        return '<div class="comment-card" style="animation-delay:' + delayMs + 'ms">' +
+            '<div class="cc-header">' +
+                '<div class="cc-avatar" style="background:' + color + '">' + esc(initials) + '</div>' +
+                '<div class="cc-meta">' +
+                    '<div class="cc-teacher">' + (rec.teacher ? esc(rec.teacher) : 'Teacher') + '</div>' +
+                    (dateStr ? '<div class="cc-date">' + dateStr + '</div>' : '') +
+                '</div>' +
+                '<div class="cc-stars-badge">\u{2B50} ' + starsText + '</div>' +
+            '</div>' +
+            '<div class="cc-target">' +
+                '<span class="cc-target-arrow">\u{2192}</span> ' + esc(rec.target) +
+            '</div>' +
+            (rec.comment ? '<div class="cc-comment">&ldquo;' + esc(rec.comment) + '&rdquo;</div>' : '') +
+        '</div>';
+    }).join('');
+
+    if (filtered.length > classCommentsShown) {
+        html += '<button class="show-more-btn" onclick="showMoreClassComments()">Show more (' + (filtered.length - classCommentsShown) + ' remaining)</button>';
+    }
+    feed.innerHTML = html;
+}
+
+function showMoreClassComments() {
+    classCommentsShown += COMMENT_PAGE_SIZE;
+    var nameSet = {};
+    lastFilteredClassNames.forEach(function(n) { nameSet[n] = true; });
+    var filtered = allRecords.filter(function(rec) {
+        return rec.isClass && nameSet[rec.target] && (rec.comment || rec.teacher);
+    }).sort(sortByDateDesc);
+    renderClassCommentCards(document.getElementById('classCommentFeed'), filtered);
+}
+
+/* ── Recent Comments Feed for Students (below student table) ── */
 function renderCommentFeed(studentNames) {
     var section = document.getElementById('recentCommentsSection');
     var feed = document.getElementById('commentFeed');
@@ -791,12 +877,7 @@ function renderCommentFeed(studentNames) {
 
     var filtered = allRecords.filter(function(rec) {
         return !rec.isClass && nameSet[rec.target] && (rec.comment || rec.teacher);
-    }).sort(function(a, b) {
-        if (a.dateStr && b.dateStr) return b.dateStr.localeCompare(a.dateStr);
-        if (a.dateStr) return -1;
-        if (b.dateStr) return 1;
-        return 0;
-    });
+    }).sort(sortByDateDesc);
 
     if (filtered.length === 0) {
         section.style.display = 'none';
@@ -844,12 +925,7 @@ function showMoreComments() {
     lastFilteredStudentNames.forEach(function(n) { nameSet[n] = true; });
     var filtered = allRecords.filter(function(rec) {
         return !rec.isClass && nameSet[rec.target] && (rec.comment || rec.teacher);
-    }).sort(function(a, b) {
-        if (a.dateStr && b.dateStr) return b.dateStr.localeCompare(a.dateStr);
-        if (a.dateStr) return -1;
-        if (b.dateStr) return 1;
-        return 0;
-    });
+    }).sort(sortByDateDesc);
     renderCommentCards(document.getElementById('commentFeed'), filtered);
 }
 
